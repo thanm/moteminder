@@ -27,8 +27,11 @@ func verb(vlevel int, s string, a ...interface{}) {
 	}
 }
 
-func doGomoteCmd(gcmd []string) []string {
+func doGomoteCmd(v2 bool, gcmd []string) []string {
 	verb(1, "gomote command is: %+v", gcmd)
+	if v2 {
+		gcmd = append([]string{"v2"}, gcmd...)
+	}
 	cmd := exec.Command("gomote", gcmd...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -39,25 +42,28 @@ func doGomoteCmd(gcmd []string) []string {
 	return lines
 }
 
-func pingMote(mote string) {
+func pingMote(v2 bool, mote string) {
 	verb(1, "pinging %s", mote)
-	doGomoteCmd([]string{"ls", mote})
+	doGomoteCmd(v2, []string{"ls", mote})
 }
 
 func pingMotes() {
 	verb(1, "pinging all motes")
-	mlines := doGomoteCmd([]string{"list"})
-	for _, line := range mlines {
-		line = strings.Trim(string(line), " \t\n")
-		if line == "" {
-			continue
+	modes := []bool{false, true}
+	for _, v2 := range modes {
+		mlines := doGomoteCmd(v2, []string{"list"})
+		for _, line := range mlines {
+			line = strings.Trim(string(line), " \t\n")
+			if line == "" {
+				continue
+			}
+			fields := strings.Fields(line)
+			if len(fields) < 2 {
+				log.Fatalf("unexpected output line from 'gomote list': %s", line)
+			}
+			mote := fields[0]
+			pingMote(v2, mote)
 		}
-		fields := strings.Fields(line)
-		if len(fields) < 2 {
-			log.Fatalf("unexpected output line from 'gomote list': %s", line)
-		}
-		mote := fields[0]
-		pingMote(mote)
 	}
 }
 
@@ -69,7 +75,7 @@ func main() {
 	if flag.NArg() != 0 {
 		log.Fatalf("unknown extra args")
 	}
-	doGomoteCmd([]string{"list"}) // make sure gomote works ok
+	doGomoteCmd(false, []string{"list"}) // make sure gomote works ok
 	duration := math.MaxInt32
 	if *hoursflag != 0 {
 		if *hoursflag < 0 {
