@@ -62,7 +62,7 @@ func writeToErrLog(out string, trunc bool) {
 }
 
 func doGomoteCmd(flags moteCmdFlags, gcmd []string) []string {
-	const retries = 5
+	const retries = 3
 	if (flags & MOTE_CMD_V2_MOTE) != 0 {
 		gcmd = append([]string{"v2"}, gcmd...)
 	}
@@ -94,8 +94,7 @@ func doGomoteCmd(flags moteCmdFlags, gcmd []string) []string {
 
 func pingMote(flags moteCmdFlags, mote string) {
 	verb(1, "pinging %s", mote)
-
-	doGomoteCmd(flags, []string{"ls", mote})
+	doGomoteCmd(flags, []string{"ping", mote})
 }
 
 func pingMotes() {
