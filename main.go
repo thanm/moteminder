@@ -100,7 +100,7 @@ func pingMote(flags moteCmdFlags, mote string) {
 func pingMotes() {
 	verb(1, "pinging all motes")
 	basemode := MOTE_CMD_RETRY | MOTE_CMD_LOGERR
-	modes := []moteCmdFlags{basemode, basemode | MOTE_CMD_V2_MOTE}
+	modes := []moteCmdFlags{basemode}
 	for _, mode := range modes {
 		mlines := doGomoteCmd(mode, []string{"list"})
 		for _, line := range mlines {
