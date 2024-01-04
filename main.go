@@ -28,7 +28,7 @@ const (
 	MOTE_CMD_RETRY        moteCmdFlags = 1
 	MOTE_CMD_DIE_ON_ERROR moteCmdFlags = 2
 	MOTE_CMD_LOGERR       moteCmdFlags = 4
-	MOTE_CMD_V2_MOTE      moteCmdFlags = 8
+	MOTE_CMD_LUCI_MOTE    moteCmdFlags = 8
 )
 
 func verb(vlevel int, s string, a ...interface{}) {
@@ -61,14 +61,29 @@ func writeToErrLog(out string, trunc bool) {
 	of.Close()
 }
 
+func addGomoteLuciEnv(env []string) []string {
+	rv := []string{}
+	if len(env) == 0 {
+		env = os.Environ()
+	}
+	for _, v := range env {
+		if strings.HasPrefix(v, "GOMOTELUCI=") {
+			continue
+		}
+		rv = append(rv, v)
+	}
+	rv = append(rv, "GOMOTELUCI=true")
+	return rv
+}
+
 func doGomoteCmd(flags moteCmdFlags, gcmd []string) []string {
 	const retries = 3
-	if (flags & MOTE_CMD_V2_MOTE) != 0 {
-		gcmd = append([]string{"v2"}, gcmd...)
-	}
 	verb(1, "gomote command is: %+v", gcmd)
 	for i := 0; i < retries; i++ {
 		cmd := exec.Command("gomote", gcmd...)
+		if (flags & MOTE_CMD_LUCI_MOTE) != 0 {
+			cmd.Env = addGomoteLuciEnv(cmd.Env)
+		}
 		out, err := cmd.CombinedOutput()
 		if err == nil {
 			lines := strings.Split(string(out), "\n")
@@ -100,7 +115,7 @@ func pingMote(flags moteCmdFlags, mote string) {
 func pingMotes() {
 	verb(1, "pinging all motes")
 	basemode := MOTE_CMD_RETRY | MOTE_CMD_LOGERR
-	modes := []moteCmdFlags{basemode}
+	modes := []moteCmdFlags{basemode, basemode | MOTE_CMD_LUCI_MOTE}
 	for _, mode := range modes {
 		mlines := doGomoteCmd(mode, []string{"list"})
 		for _, line := range mlines {
