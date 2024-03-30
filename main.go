@@ -67,12 +67,12 @@ func addGomoteLuciEnv(env []string) []string {
 		env = os.Environ()
 	}
 	for _, v := range env {
-		if strings.HasPrefix(v, "GOMOTELUCI=") {
+		if strings.HasPrefix(v, "GOMOTEDISABLELUCI=") {
 			continue
 		}
 		rv = append(rv, v)
 	}
-	rv = append(rv, "GOMOTELUCI=true")
+	rv = append(rv, "GOMOTEDISABLELUCI=true")
 	return rv
 }
 
